@@ -42,15 +42,13 @@ function getRoleName(value: unknown): string {
 
 const loadClinicSession = cache(async (): Promise<ClinicSession> => {
   const client = await createSupabaseServerClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await client.auth.getUser();
+  const { data, error: authError } = await client.auth.getClaims();
 
   if (authError && authError.name !== "AuthSessionMissingError") {
     throw new Error(`Could not validate the current session: ${authError.message}`);
   }
-  if (!user) {
+  const userId = data?.claims?.sub;
+  if (typeof userId !== "string" || !userId) {
     redirect("/login");
   }
 
@@ -58,10 +56,10 @@ const loadClinicSession = cache(async (): Promise<ClinicSession> => {
     client
       .from("profiles")
       .select("id, username, full_name, email, account_status")
-      .eq("id", user.id)
+      .eq("id", userId)
       .maybeSingle(),
     client.rpc("current_user_permissions"),
-    client.from("user_roles").select("role:roles(name)").eq("user_id", user.id),
+    client.from("user_roles").select("role:roles(name)").eq("user_id", userId),
   ]);
 
   if (profileResult.error) {

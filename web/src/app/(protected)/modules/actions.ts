@@ -10,7 +10,6 @@ const actorColumns: Record<string, string> = {
   patients: "created_by",
   appointments: "created_by",
   physiotherapy_records: "created_by",
-  physiotherapy_sessions: "created_by",
   psychology_records: "created_by",
   psychology_notes: "authored_by",
   patient_general_notes: "created_by",

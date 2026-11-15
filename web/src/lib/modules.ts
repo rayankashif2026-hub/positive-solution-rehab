@@ -73,6 +73,11 @@ const patientField: FormField = {
   optionDetail: "patient_number",
 };
 
+const participantField: FormField = {
+  ...patientField,
+  label: "Participant",
+};
+
 const staffField: FormField = {
   name: "practitioner_id",
   label: "Practitioner",
@@ -196,30 +201,6 @@ export const MODULES: Record<string, ModuleDefinition> = {
     ],
     archiveField: "archived_at",
   },
-  "physiotherapy-sessions": {
-    title: "Physiotherapy sessions",
-    table: "physiotherapy_sessions",
-    readPermission: "physiotherapy.read",
-    createPermission: "physiotherapy.manage",
-    updatePermission: "physiotherapy.manage",
-    select: "id,session_date,treatment,completed,record:physiotherapy_records(patient:patients(full_name)),practitioner:staff(full_name)",
-    orderBy: "session_date",
-    columns: [
-      { key: "session_date", label: "Session date" },
-      { key: "record.patient.full_name", label: "Patient" },
-      { key: "treatment", label: "Treatment" },
-      { key: "practitioner.full_name", label: "Practitioner" },
-      { key: "completed", label: "Completed" },
-    ],
-    fields: [
-      { name: "record_id", label: "Physiotherapy record", type: "select", required: true, optionTable: "physiotherapy_records", optionLabel: "diagnosis" },
-      { name: "session_date", label: "Session date", type: "datetime-local", required: true },
-      { name: "treatment", label: "Treatment", type: "textarea", required: true },
-      staffField,
-      { name: "completed", label: "Completed", type: "checkbox" },
-      { name: "clinical_notes", label: "Clinical notes", type: "textarea" },
-    ],
-  },
   psychology: {
     title: "Psychology",
     table: "psychology_records",
@@ -227,7 +208,7 @@ export const MODULES: Record<string, ModuleDefinition> = {
     createPermission: "psychology.manage",
     updatePermission: "psychology.manage",
     departmentSlug: "psychology",
-    select: "id,presenting_concern,diagnosis,followup_date,payment_status,created_at,patient:patients(full_name),psychologist:staff(full_name)",
+    select: "id,presenting_concern,diagnosis,followup_date,created_at,patient:patients(full_name),psychologist:staff(full_name)",
     orderBy: "created_at",
     columns: [
       { key: "patient.full_name", label: "Patient" },
@@ -243,7 +224,6 @@ export const MODULES: Record<string, ModuleDefinition> = {
       { name: "presenting_concern", label: "Presenting concern", type: "textarea", required: true },
       { name: "diagnosis", label: "Diagnosis", type: "textarea" },
       { name: "followup_date", label: "Follow-up date", type: "date" },
-      { name: "payment_status", label: "Payment status", type: "select", required: true, options: statusOptions("pending", "paid", "partial", "assistance") },
     ],
     archiveField: "archived_at",
   },
@@ -354,14 +334,14 @@ export const MODULES: Record<string, ModuleDefinition> = {
     select: "id,joined_on,active,patient:patients(full_name),batch:exercise_batches(batch_name)",
     orderBy: "joined_on",
     columns: [
-      { key: "patient.full_name", label: "Patient" },
+      { key: "patient.full_name", label: "Participant" },
       { key: "batch.batch_name", label: "Batch" },
       { key: "joined_on", label: "Joined" },
       { key: "active", label: "Active" },
     ],
     fields: [
       { name: "batch_id", label: "Batch", type: "select", required: true, optionTable: "exercise_batches", optionLabel: "batch_name" },
-      patientField,
+      participantField,
       { name: "joined_on", label: "Joined on", type: "date", required: true },
       { name: "active", label: "Active", type: "checkbox" },
     ],

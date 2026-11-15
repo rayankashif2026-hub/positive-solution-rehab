@@ -10,7 +10,6 @@ const modules = [
   ["patient-notes", "General patient notes", "patients.notes.read"],
   ["appointments", "Appointments", "appointments.read"],
   ["physiotherapy", "Physiotherapy", "physiotherapy.read"],
-  ["physiotherapy-sessions", "Physiotherapy sessions", "physiotherapy.read"],
   ["psychology", "Psychology", "psychology.read"],
   ["psychology-notes", "Confidential psychology notes", "psychology.notes.read"],
   ["hijama", "Hijama", "hijama.read"],

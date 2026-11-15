@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Suspense, use } from "react";
 import {
   Activity,
   Apple,
@@ -38,8 +39,29 @@ type WorkspaceShellProps = {
   fullName: string;
   username: string;
   navItems: NavigationItem[];
-  dueFollowupCount: number | null;
+  dueFollowupCount: Promise<number> | null;
 };
+
+function FollowupNotification({ countPromise }: { countPromise: Promise<number> }) {
+  const dueFollowupCount = use(countPromise);
+
+  return (
+    <Link
+      aria-label={`${dueFollowupCount} follow-ups due today`}
+      className="notification-link"
+      href="/modules/followups"
+      title={`${dueFollowupCount} follow-ups due today`}
+    >
+      <Bell aria-hidden="true" size={18} />
+      {dueFollowupCount > 0 && (
+        <span className="notification-badge">
+          {dueFollowupCount > 99 ? "99+" : dueFollowupCount}
+        </span>
+      )}
+      <span className="sr-only">Follow-ups due today</span>
+    </Link>
+  );
+}
 
 function iconForHref(href: string) {
   if (href === "/dashboard") return LayoutDashboard;
@@ -232,21 +254,16 @@ export default function WorkspaceShell({
             <span className="topbar-kicker">CLINIC WORKSPACE</span>
             <strong>{currentLabel}</strong>
           </div>
-          {dueFollowupCount !== null && (
-            <Link
-              aria-label={`${dueFollowupCount} follow-ups due today`}
-              className="notification-link"
-              href="/modules/followups"
-              title={`${dueFollowupCount} follow-ups due today`}
-            >
-              <Bell aria-hidden="true" size={18} />
-              {dueFollowupCount > 0 && (
-                <span className="notification-badge">
-                  {dueFollowupCount > 99 ? "99+" : dueFollowupCount}
+          {dueFollowupCount && (
+            <Suspense
+              fallback={
+                <span aria-hidden="true" className="notification-link">
+                  <Bell size={18} />
                 </span>
-              )}
-              <span className="sr-only">Follow-ups due today</span>
-            </Link>
+              }
+            >
+              <FollowupNotification countPromise={dueFollowupCount} />
+            </Suspense>
           )}
           <div className="topbar-session">
             <ShieldCheck aria-hidden="true" size={17} />
