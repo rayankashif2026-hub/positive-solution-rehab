@@ -38,6 +38,12 @@ npx supabase db push
 Keep the Supabase service-role key server-side. Never place it in a
 `NEXT_PUBLIC_*` variable or commit it to source control.
 
+Permanent record deletion is available only to users with `system.manage`
+(granted to the Developer / Head Developer role, not Head Admin), requires an
+explicit confirmation, and is recorded in the audit history.
+Foreign-key relationships may block deletion; archive records when history
+needs to be preserved.
+
 ### Configure and start the web app
 
 In PowerShell:
@@ -60,6 +66,9 @@ Removing an account deletes its login and access grants while preserving
 clinical records and audit history. Developer accounts are managed through the
 one-time bootstrap process. Head Admin-only and department-admin roles cannot
 access this section.
+For development access from the clinic LAN, `web/next.config.ts` allows the
+current app host `192.168.1.65`; update `allowedDevOrigins` there if the machine's
+LAN address changes, then restart the Next.js dev server.
 For an existing deployment, run `npx supabase db push` before using the updated
 roles so the migrations grant Head Admin to existing Head Developers and keep
 User administration restricted to the Developer role.
@@ -89,6 +98,48 @@ request.
 The worker retries failed deliveries up to five times and claims jobs
 transactionally. If Gmail is not configured, login still works and notification
 delivery is reported as unavailable/failed in the outbox.
+
+### Optional clinic assistant
+
+The authenticated workspace includes an optional floating assistant. Manual
+registration, appointments, payments, attendance, and department workflows
+remain available independently. The assistant prepares the existing module
+forms, searches records allowed by the signed-in user's permissions, checks
+upcoming follow-ups, and links to the existing report exporter. Record changes
+are shown for review and require explicit confirmation before using the same
+authorized save path as manual forms.
+
+Search results can also be edited, archived, or permanently deleted from the
+assistant when the signed-in user has the corresponding permissions. Archive
+and deletion actions require an explicit confirmation; permanent deletion is
+restricted to `system.manage`, obeys row-level security and foreign-key
+constraints, and is written to the database audit trail. Manual module controls
+remain available independently.
+
+The assistant uses a local Ollama model for request interpretation and form
+value extraction. It sends prompts only to the loopback Ollama service; it does
+not use an external AI API. If Ollama or the configured model is unavailable,
+the assistant explicitly reports that and falls back to guided rules for
+common requests. The local model cannot save records itself: authorized server
+actions, review, and explicit confirmation are still required.
+
+Install Ollama, start its local server, and download the default model:
+
+```powershell
+ollama serve
+ollama pull qwen2.5:1.5b
+```
+
+Set `OLLAMA_BASE_URL` and `OLLAMA_MODEL` in the server environment if using a
+different local endpoint or model. The default local URL and model are listed in
+`web/.env.example`. The model is not bundled with the application and must be
+installed separately.
+
+Apply the Supabase migrations with `npx supabase db push` before using assistant
+record changes. Assistant writes require the assistant audit migration and
+fail closed if its audit operation is unavailable. Assistant permanent deletion
+also requires the system-managed record deletion migration; it remains restricted
+to `system.manage` and respects foreign-key constraints.
 
 ### Staff access requests
 

@@ -32,6 +32,7 @@ import {
 import { useMemo, useState, type ReactNode } from "react";
 
 import { logout } from "@/app/login/actions";
+import AssistantChat from "@/components/assistant-chat";
 import type { NavigationItem } from "@/lib/navigation";
 
 type WorkspaceShellProps = {
@@ -272,6 +273,7 @@ export default function WorkspaceShell({
         </header>
         <main className="main-content">{children}</main>
       </div>
+      <AssistantChat />
     </div>
   );
 }

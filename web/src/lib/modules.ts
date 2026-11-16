@@ -136,6 +136,7 @@ export const MODULES: Record<string, ModuleDefinition> = {
       { key: "note", label: "Note" },
       { key: "created_at", label: "Added" },
     ],
+    searchColumns: ["note"],
     fields: [
       patientField,
       { name: "note", label: "Note", type: "textarea", required: true },
@@ -240,6 +241,7 @@ export const MODULES: Record<string, ModuleDefinition> = {
       { key: "note", label: "Clinical note" },
       { key: "created_at", label: "Added" },
     ],
+    searchColumns: ["note"],
     fields: [
       { name: "record_id", label: "Psychology record", type: "select", required: true, optionTable: "psychology_records", optionLabel: "presenting_concern" },
       { name: "note", label: "Clinical note", type: "textarea", required: true },
@@ -315,6 +317,7 @@ export const MODULES: Record<string, ModuleDefinition> = {
       { key: "trainer.full_name", label: "Trainer" },
       { key: "is_active", label: "Active" },
     ],
+    searchColumns: ["batch_name"],
     fields: [
       departmentField,
       { name: "batch_name", label: "Batch", type: "select", required: true, options: statusOptions("morning", "evening") },
@@ -414,6 +417,7 @@ export const MODULES: Record<string, ModuleDefinition> = {
       { key: "check_in", label: "Check in" },
       { key: "check_out", label: "Check out" },
     ],
+    searchColumns: ["status"],
     fields: [
       { name: "staff_id", label: "Staff member", type: "select", required: true, optionTable: "staff", optionLabel: "full_name" },
       { name: "attendance_date", label: "Date", type: "date", required: true },
@@ -560,6 +564,7 @@ export const MODULES: Record<string, ModuleDefinition> = {
       { key: "reason", label: "Reason" },
       { key: "reference", label: "Reference" },
     ],
+    searchColumns: ["transaction_type", "reason", "reference"],
     fields: [
       { name: "item_id", label: "Inventory item", type: "select", required: true, optionTable: "inventory_items", optionLabel: "item_name" },
       { name: "quantity_change", label: "Quantity change (+ or -)", type: "number", required: true, step: "1" },
@@ -585,6 +590,7 @@ export const MODULES: Record<string, ModuleDefinition> = {
       { key: "condition", label: "Condition" },
       { key: "availability_status", label: "Availability" },
     ],
+    searchColumns: ["equipment_name", "category"],
     fields: [
       departmentField,
       { name: "equipment_name", label: "Equipment name", type: "text", required: true },
@@ -612,6 +618,7 @@ export const MODULES: Record<string, ModuleDefinition> = {
       { key: "estimated_cost", label: "Estimated cost" },
       { key: "request_status", label: "Status" },
     ],
+    searchColumns: ["equipment_name", "category", "request_status"],
     fields: [
       departmentField,
       { name: "equipment_name", label: "Equipment name", type: "text", required: true },
@@ -638,6 +645,7 @@ export const MODULES: Record<string, ModuleDefinition> = {
       { key: "cost", label: "Cost" },
       { key: "performed_by", label: "Performed by" },
     ],
+    searchColumns: ["description", "performed_by"],
     fields: [
       { name: "equipment_id", label: "Equipment", type: "select", required: true, optionTable: "equipment", optionLabel: "equipment_name" },
       { name: "performed_at", label: "Date", type: "date", required: true },

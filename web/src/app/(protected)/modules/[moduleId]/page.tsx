@@ -1,15 +1,25 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { archiveRecord } from "@/app/(protected)/modules/actions";
+import {
+  archiveRecord,
+  permanentlyDeleteRecord,
+} from "@/app/(protected)/modules/actions";
 import ArchiveButton from "@/components/archive-button";
+import DeleteRecordButton from "@/components/delete-record-button";
 import { hasPermission, requirePermission } from "@/lib/auth";
 import { MODULES } from "@/lib/modules";
 import { requireRecordArray } from "@/lib/response-data";
 
 type ModulePageProps = {
   params: Promise<{ moduleId: string }>;
-  searchParams: Promise<{ q?: string; saved?: string; archived?: string; error?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    saved?: string;
+    archived?: string;
+    deleted?: string;
+    error?: string;
+  }>;
 };
 
 function nestedValue(row: Record<string, unknown>, path: string): unknown {
@@ -79,12 +89,13 @@ export default async function ModulePage({ params, searchParams }: ModulePagePro
 
   const archivePermission =
     moduleId === "patients" ? "patients.archive" : definition.updatePermission;
-  const [queryResult, [canCreate, canUpdate, canArchive]] = await Promise.all([
+  const [queryResult, [canCreate, canUpdate, canArchive, canDelete]] = await Promise.all([
     query,
     Promise.all([
       hasPermission(definition.createPermission),
       hasPermission(definition.updatePermission),
       hasPermission(archivePermission),
+      hasPermission("system.manage"),
     ]),
   ]);
   const { data, error } = queryResult;
@@ -96,10 +107,21 @@ export default async function ModulePage({ params, searchParams }: ModulePagePro
   const mayArchive = canArchive && canUpdate;
 
   const archiveAction = archiveRecord.bind(null, moduleId);
+  const deleteAction = permanentlyDeleteRecord.bind(null, moduleId);
+  const canEdit = canUpdate && definition.updateable !== false;
+  const hasActions = canEdit || (mayArchive && Boolean(definition.archiveField)) || canDelete;
   const notice = queryParams.saved
     ? "Record saved."
     : queryParams.archived
       ? "Record archived."
+      : queryParams.deleted
+        ? "Record permanently deleted. The audit history was retained."
+        : queryParams.error === "delete-linked-records"
+          ? "This record has linked records and cannot be deleted. Archive it instead."
+          : queryParams.error === "delete-forbidden"
+            ? "The app permission check passed, but database delete access is not enabled. Apply the latest system-managed record deletion migration and try again."
+            : queryParams.error === "delete-failed"
+              ? "The record could not be permanently deleted."
       : queryParams.error
         ? "The requested action could not be completed."
         : null;
@@ -134,7 +156,7 @@ export default async function ModulePage({ params, searchParams }: ModulePagePro
             <thead>
               <tr>
                 {definition.columns.map((column) => <th key={column.key}>{column.label}</th>)}
-                {(canUpdate && definition.updateable !== false) || (mayArchive && definition.archiveField)
+                {hasActions
                   ? <th>Actions</th>
                   : null}
               </tr>
@@ -151,10 +173,10 @@ export default async function ModulePage({ params, searchParams }: ModulePagePro
                         : displayValue(nestedValue(row, column.key))}
                     </td>
                   ))}
-                  {(canUpdate && definition.updateable !== false) || (mayArchive && definition.archiveField)
+                  {hasActions
                     ? (
                       <td className="table-actions">
-                        {canUpdate && definition.updateable !== false && (
+                        {canEdit && (
                           <Link
                             className="button"
                             href={`/modules/${moduleId}/${row.id}/edit`}
@@ -165,6 +187,13 @@ export default async function ModulePage({ params, searchParams }: ModulePagePro
                         {mayArchive && definition.archiveField && (
                           <ArchiveButton action={archiveAction} recordId={String(row.id)} />
                         )}
+                        {canDelete && (
+                          <DeleteRecordButton
+                            action={deleteAction}
+                            moduleTitle={definition.title}
+                            recordId={String(row.id)}
+                          />
+                        )}
                       </td>
                     )
                     : null}
@@ -172,7 +201,7 @@ export default async function ModulePage({ params, searchParams }: ModulePagePro
               ))}
               {!rows.length && (
                 <tr>
-                  <td className="empty-state" colSpan={definition.columns.length + 1}>
+                  <td className="empty-state" colSpan={definition.columns.length + (hasActions ? 1 : 0)}>
                     No records found.
                   </td>
                 </tr>

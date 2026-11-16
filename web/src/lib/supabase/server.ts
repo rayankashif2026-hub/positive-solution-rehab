@@ -15,9 +15,22 @@ export async function createSupabaseServerClient() {
       setAll(
         cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }>,
       ) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          cookieStore.set(name, value, options);
-        });
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            error.message.startsWith(
+              "Cookies can only be modified in a Server Action or Route Handler",
+            )
+          ) {
+            // The proxy refreshes Supabase cookies before rendering Server Components.
+            return;
+          }
+          throw error;
+        }
       },
     },
   });
