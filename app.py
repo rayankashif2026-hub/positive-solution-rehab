@@ -59,6 +59,7 @@ RESOURCES = {
         "title": "Appointments",
         "singular": "Appointment",
         "model": Appointment,
+        "select_related": ("patient", "staff"),
         "columns": ("appointment_date", "appointment_time", "patient", "service", "staff", "status"),
         "search": ("patient__name", "patient__contact", "service", "status"),
     },
@@ -66,6 +67,7 @@ RESOURCES = {
         "title": "Physiotherapy records",
         "singular": "Physiotherapy record",
         "model": PhysiotherapyRecord,
+        "select_related": ("patient", "treated_by"),
         "columns": ("patient", "diagnosis", "treated_by", "payment_type", "followup_date",
                     "total_sessions", "sessions_done", "sessions_left"),
         "search": ("patient__name", "patient__contact", "diagnosis"),
@@ -74,6 +76,7 @@ RESOURCES = {
         "title": "Exercise batches",
         "singular": "Exercise batch",
         "model": ExerciseBatch,
+        "select_related": ("trainer",),
         "columns": ("batch_name", "start_time", "end_time", "trainer"),
         "search": ("batch_name",),
     },
@@ -81,6 +84,7 @@ RESOURCES = {
         "title": "Batch members",
         "singular": "Batch member",
         "model": BatchMember,
+        "select_related": ("patient", "batch"),
         "columns": ("patient", "batch", "joined_on", "is_active"),
         "search": ("patient__name", "batch__batch_name"),
     },
@@ -88,6 +92,7 @@ RESOURCES = {
         "title": "Batch attendance",
         "singular": "Batch attendance",
         "model": BatchAttendance,
+        "select_related": ("batch", "patient"),
         "columns": ("att_date", "batch", "patient", "present"),
         "search": ("patient__name", "batch__batch_name"),
     },
@@ -95,6 +100,7 @@ RESOURCES = {
         "title": "Staff attendance",
         "singular": "Staff attendance",
         "model": StaffAttendance,
+        "select_related": ("staff",),
         "columns": ("att_date", "staff", "status", "time_in", "time_out"),
         "search": ("staff__name", "status"),
     },
@@ -135,10 +141,9 @@ async def initialize_database() -> None:
 
 
 def authenticated_staff(credentials: HTTPBasicCredentials | None):
-    user_model = get_user_model()
-    if not user_model.objects.filter(is_staff=True).exists():
-        return None
     if credentials is None:
+        if not get_user_model().objects.filter(is_staff=True).exists():
+            return None
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Staff login required",
@@ -461,6 +466,8 @@ def list_records(resource: str, q: str = "", user=Depends(require_staff)):
     config = get_resource(resource)
     model = config["model"]
     queryset = model.objects.all()
+    if config.get("select_related"):
+        queryset = queryset.select_related(*config["select_related"])
     if q.strip():
         query = Q()
         for field in config["search"]:
